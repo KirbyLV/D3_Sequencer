@@ -220,7 +220,7 @@ _lock = threading.Lock()
 
 DEFAULT_CONFIG = {
     "server": {
-        "host": "172.16.16.107",
+        "host": "10.10.22.101",
         "port": 80,
         "scheme": "http",
         "timeout_seconds": 15,

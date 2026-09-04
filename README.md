@@ -5,7 +5,7 @@ inserting layers (and marking a matching Section) at a chosen point on a
 Track, driven by an asset-ID based file naming convention.
 
 It talks to D3's own HTTP APIs, so it runs on your machine and needs network
-access to your D3 box (e.g. `172.16.16.107`) -- it can't run anywhere that
+access to your D3 box (e.g. `10.10.22.101`) -- it can't run anywhere that
 isn't on the same network as the media server.
 
 ## Naming convention
@@ -14,7 +14,7 @@ isn't on the same network as the media server.
 {assetID}_{description}_{mappingNumber}_{version}.ext
 ```
 
-Example: `042_CityScape_Intro_3_02.mov` -> asset id `042`, description
+Example: `042_CityScape_Intro_3_v02.mov` -> asset id `042`, description
 `CityScape_Intro`, mapping number `3`, version `02`. The description may
 contain underscores. `.mov` and common image extensions are both recognized.
 
@@ -37,7 +37,7 @@ Then open http://127.0.0.1:5151 in a browser.
 
 On the **Setup** tab:
 
-1. Enter your D3 server's host/port (defaults to `172.16.16.107` / `80`) and
+1. Enter your D3 server's host/port (defaults to `10.10.22.101` / `80`) and
    **Save Server Settings**, then **Test Connection** (top right).
 2. **Scan Filenames** to pull the mapping numbers actually present in your
    media library's file names.
