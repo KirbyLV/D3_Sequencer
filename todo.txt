@@ -1,0 +1,7 @@
+#todo list
+-add search to media library
+-clean up description text on page, we dont need that long of descriptions filling up the page
+-add preset buttons for duration - 10s, 15s, 30s, 1minute, these should populate the length window
+-remove the insert chosen method dropdown, as we very rarely use ping-ping. the two options for insert looped and insert paused are enough
+-make right hand destination widget stick when longer media libraries enbale long scrolling, perhaps top header sticks and media library is its own scrolling widget
+-what happens when we work on a new show? do we need a reset for the mappings setup?

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D3 Sequencer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>D3 Sequencer</h1>
+    <div class="conn">
+      <span id="connDot" class="dot dot-unknown"></span>
+      <span id="connLabel">not tested</span>
+      <button id="btnTestConn" class="btn small">Test Connection</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="insert">Browse &amp; Insert</button>
+    <button class="tab-btn" data-tab="setup">Setup</button>
+    <button class="tab-btn" data-tab="console">Discovery Console</button>
+  </nav>
+
+  <!-- ============ INSERT TAB ============ -->
+  <section id="tab-insert" class="tab-panel active">
+    <div class="panel-row">
+      <div class="panel col-wide">
+        <div class="panel-head">
+          <h2>Media Library</h2>
+          <button id="btnRefreshMedia" class="btn small">Refresh</button>
+        </div>
+        <input id="mediaSearch" type="text" placeholder="Search assets..." class="media-search" />
+        <div id="assetGroups" class="asset-groups">
+          <p class="hint">Click Refresh to load content from D3.</p>
+        </div>
+        <details id="unparsedDetails" class="unparsed" hidden>
+          <summary>Files that don't match the naming convention (<span id="unparsedCount">0</span>)</summary>
+          <ul id="unparsedList"></ul>
+        </details>
+      </div>
+
+      <div class="panel col-narrow">
+        <h2>Destination</h2>
+        <label>Track
+          <div class="row">
+            <select id="trackSelect"></select>
+            <button id="btnRefreshTracks" class="btn small">↻</button>
+          </div>
+        </label>
+        <div id="trackSectionsHint" class="hint"></div>
+        <label>Start (timecode, e.g. 1:45:00)
+          <div class="row">
+            <input id="startTimecode" type="text" value="0:00:00" placeholder="M:SS:FF" />
+            <button id="btnAdvance15" class="btn small" type="button" title="Advance 15 seconds of timecode">+15s</button>
+          </div>
+        </label>
+        <div id="timecodeHint" class="hint"></div>
+        <label>Length (seconds)
+          <input id="lengthSeconds" type="number" step="0.25" value="15" />
+        </label>
+        <div class="row duration-presets">
+          <button type="button" class="btn small duration-preset" data-seconds="10">10s</button>
+          <button type="button" class="btn small duration-preset" data-seconds="15">15s</button>
+          <button type="button" class="btn small duration-preset" data-seconds="30">30s</button>
+          <button type="button" class="btn small duration-preset" data-seconds="60">1m</button>
+        </div>
+        <p class="hint">Start accepts M:SS, M:SS:FF, or H:MM:SS:FF -- periods
+          work like colons (1.45.00). Length is ruler seconds too, so the
+          end lands exactly on the next section break (see the preview
+          above).</p>
+
+        <div class="mode-toggle">
+          <span>Mode</span>
+          <div class="toggle" id="modeToggle" data-mode="Normal">
+            <span class="toggle-option" data-value="Normal">Normal</span>
+            <span class="toggle-option" data-value="Locked">Locked</span>
+          </div>
+        </div>
+
+        <label class="checkbox-row">
+          <input id="createSection" type="checkbox" />
+          Also mark a Section here
+        </label>
+
+        <h3>Selected asset</h3>
+        <div id="selectedAssetSummary" class="hint">None selected. Click an asset card, then choose which mapping numbers to insert.</div>
+
+        <div class="insert-buttons">
+          <button id="btnInsertLoop" class="btn primary" disabled>Insert Looped</button>
+          <button id="btnInsertPause" class="btn primary" disabled>Insert Paused</button>
+        </div>
+
+        <h3>Result</h3>
+        <pre id="insertResult" class="log"></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SETUP TAB ============ -->
+  <section id="tab-setup" class="tab-panel">
+    <div class="panel-row">
+      <div class="panel col-narrow">
+        <h2>Server</h2>
+        <label>Scheme
+          <select id="cfgScheme">
+            <option value="http">http</option>
+            <option value="https">https</option>
+          </select>
+        </label>
+        <label>Host
+          <input id="cfgHost" type="text" placeholder="172.16.16.107" />
+        </label>
+        <label>Port
+          <input id="cfgPort" type="number" value="80" />
+        </label>
+        <label>Timeout (seconds)
+          <input id="cfgTimeout" type="number" value="15" />
+        </label>
+        <button id="btnSaveServer" class="btn primary">Save Server Settings</button>
+      </div>
+
+      <div class="panel col-wide">
+        <div class="panel-head">
+          <h2>Mapping Number Configuration</h2>
+          <div class="row">
+            <button id="btnScanMappingNumbers" class="btn small">Scan Filenames</button>
+            <button id="btnFetchMappings" class="btn small">Fetch Mappings from D3</button>
+          </div>
+        </div>
+        <p class="hint">
+          Match each mapping number from your filenames to a disguise mapping. Fetch from D3, then drag a chip onto a
+          row (or type and pick a suggestion). Rows shown in red don't match a mapping in the current show --
+          typically means you're on a new show and need to reassign them.
+        </p>
+        <div id="fetchedMappingsChips" class="mapping-chip-source"></div>
+        <table class="mapping-table">
+          <thead><tr><th>Mapping # (from filenames)</th><th>Disguise Mapping</th><th></th></tr></thead>
+          <tbody id="mappingTableBody"></tbody>
+        </table>
+        <div class="row">
+          <input id="newMappingNo" type="text" placeholder="mapping # e.g. 5" style="max-width:140px" />
+          <button id="btnAddMappingRow" class="btn small">Add row</button>
+        </div>
+        <div class="row">
+          <button id="btnSaveMappingMap" class="btn primary">Save Mapping Configuration</button>
+          <button id="btnClearMappingMap" class="btn" title="Clear all rows -- use when starting a new show">Clear All (New Show)</button>
+        </div>
+        <div id="fetchedMappingsHint" class="hint"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <details>
+        <summary><h2 style="display:inline">Advanced: API Expression Templates</h2></summary>
+        <p class="hint">
+          Python 2.7 snippets sent to D3's Execution API (see README for how these were confirmed). If a Designer
+          update breaks one, use the Discovery Console to find the new call and paste it in here.
+        </p>
+        <div id="expressionEditors"></div>
+        <div class="row">
+          <button id="btnSaveExpressions" class="btn primary">Save Expression Templates</button>
+          <button id="btnResetExpressions" class="btn">Restore Default Expression Templates</button>
+        </div>
+        <p class="hint">
+          A saved template always overrides app updates to that same template -- use "Restore Default" to discard
+          your edits and pick up the current built-in version.
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ CONSOLE TAB ============ -->
+  <section id="tab-console" class="tab-panel">
+    <div class="panel-row">
+      <div class="panel col-narrow">
+        <h2>Inspect an object</h2>
+        <p class="hint">Lists a Python expression's attributes and values -- handy for finding real property names
+          on your system, e.g. <code>d3.project</code>.</p>
+        <input id="inspectExpr" type="text" value="d3" placeholder="e.g. d3.project" />
+        <button id="btnInspect" class="btn primary">Inspect</button>
+        <pre id="inspectResult" class="log tall"></pre>
+      </div>
+      <div class="panel col-wide">
+        <h2>Run raw script</h2>
+        <p class="hint">Sent as-is to <code>/api/session/python/execute</code> -- Python 2.7, function scope, use
+          <code>return</code> to get a value back.</p>
+        <textarea id="consoleScript" rows="10" spellcheck="false">return {'ok': True}</textarea>
+        <button id="btnRunConsole" class="btn primary">Run</button>
+        <h3>returnValue</h3>
+        <pre id="consoleReturn" class="log"></pre>
+        <h3>pythonLog</h3>
+        <pre id="consolePyLog" class="log"></pre>
+        <h3>d3Log</h3>
+        <pre id="consoleD3Log" class="log"></pre>
+      </div>
+    </div>
+  </section>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
